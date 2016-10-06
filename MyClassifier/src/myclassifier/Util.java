@@ -74,7 +74,7 @@ public class Util {
 
     private static double calculateIntrinsicValue(Instances data, Attribute attribute) throws Exception {
         double IV = 0;
-        Instances[] splitData = splitDataBasedOnAttribute(data, attribute);
+        Instances[] splitData = splitData(data, attribute);
         for (int i = 0; i < attribute.numValues(); i++){
             if (splitData[i].numInstances() > 0) {
                 double proportion = (double)splitData[i].numInstances() / (double)data.numInstances();
@@ -88,7 +88,7 @@ public class Util {
             throws Exception {
         double IG = calculateE(instances);
         int missingCount = 0;
-        Instances[] splitData = splitDataBasedOnAttribute(instances, attribute);
+        Instances[] splitData = splitData(instances, attribute);
         for (int j = 0; j < attribute.numValues(); j++) {
             if (splitData[j].numInstances() > 0) {
                 IG -= ((double) splitData[j].numInstances() /
@@ -105,7 +105,7 @@ public class Util {
         return IG * (instances.numInstances() - missingCount / instances.numInstances());
     }
     
-    public static Instances[] splitDataBasedOnAttribute(Instances instances, Attribute attribute) {
+    public static Instances[] splitData(Instances instances, Attribute attribute) {
         Instances[] splittedData = new Instances[attribute.numValues()];
 
         for (int j = 0; j < attribute.numValues(); j++)
