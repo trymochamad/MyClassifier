@@ -15,6 +15,8 @@ import weka.core.converters.ConverterUtils.DataSource;
 import weka.filters.Filter;
 import weka.filters.supervised.instance.Resample;
 import weka.filters.unsupervised.attribute.Remove;
+import weka.classifiers.Evaluation;
+import java.util.Random;
 
 
 /**
@@ -22,6 +24,10 @@ import weka.filters.unsupervised.attribute.Remove;
  * @author mochamadtry
  */
 public class wekaCode {
+    public static final int BAYES = 0;
+    public static final int ID3 = 1;
+    public static final int J48 = 2;
+
     
     //Baca File .arff, .csv etc
     public static Instances readFileArff(String fileName) throws Exception{
@@ -52,7 +58,73 @@ public class wekaCode {
     }
     
     //Build Classifier
+    public static Classifier buildClassifier(Instances dataSet, int classifierType, boolean prune) throws Exception{
+        Classifier classifier = null;
+        if (classifierType == BAYES){
+            classifier = new NaiveBayes(); 
+            classifier.buildClassifier(dataSet);
+        }
+        else if(classifierType == ID3){
+            classifier = new Id3();
+            classifier.buildClassifier(dataSet);
+        }
+        else if(classifierType == J48){
+            classifier = new J48();
+            classifier.buildClassifier(dataSet);
+        }
+        return classifier;
+    }
     
+    //Testing model given test set 
+    public static void testingTestSet(Instances dataSet, Classifier classifiers, Instances testSet) throws Exception{
+        Evaluation evaluation = new Evaluation(dataSet); 
+        evaluation.evaluateModel(classifiers, testSet); //Evaluates the classifier on a given set of instances.
+        System.out.println(evaluation.toSummaryString("\n Testing Model given Test Set ", false));
+        
+    }
+    
+    //10-fold cross validation
+     public static void foldValidation(Instances dataSet, Classifier classifiers) throws Exception{
+        Evaluation evaluation = new Evaluation(dataSet); 
+        evaluation.crossValidateModel(classifiers, dataSet, 10, new Random(1)); //Evaluates the classifier on a given set of instances.
+        System.out.println(evaluation.toSummaryString("\n 10-fold cross validation", false));
+        System.out.println(evaluation.confusionMatrix());
+        
+    }
+     
+    //Percentage Split
+    public static void percentageSplit (Instances data, Classifier classifiers, float percentSplit) throws Exception{
+        //Split data jadi training data dan test data 
+        int jumlahDataTrain = Math.round(data.numInstances() * (percentSplit/100));
+        int jumlahDataTest = data.numInstances() - jumlahDataTrain; 
+        Instances dataTrain = new Instances(data, 0, jumlahDataTrain);
+        Instances dataTest = new Instances(data, jumlahDataTrain, jumlahDataTest);
+        
+        //Evaluate 
+        classifiers.buildClassifier(dataTrain);
+        testingTestSet(dataTrain, classifiers, dataTest);    
+    }
+    
+    //Save and Load Model 
+    public static Classifier loadModel(String fileName) throws Exception {
+        return (Classifier) SerializationHelper.read(fileName);
+    }
+    
+    public static void saveModel(String fileName, Classifier classifier) throws Exception {
+        SerializationHelper.write(fileName, classifier);
+    }
+
+    
+    //Using model to classify one unseen data(input data)
+    public static Instances classifyUnseenData (Classifier classifiers, Instances dataSet) throws Exception{
+        Instances labeledData = new Instances(dataSet);
+        // labeling data
+        for (int i = 0; i < labeledData.numInstances(); i++) {
+            double clsLabel = classifiers.classifyInstance(dataSet.instance(i));
+            labeledData.instance(i).setClassValue(clsLabel);
+        }
+        return labeledData;
+    }
     
     
 }
