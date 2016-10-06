@@ -28,10 +28,8 @@ public class MyID3 extends Classifier {
         capabilities.disableAll();
 
         capabilities.enable(Capability.NOMINAL_ATTRIBUTES);
-        capabilities.enable(Capability.NUMERIC_ATTRIBUTES);
         capabilities.enable(Capability.BINARY_CLASS);
         capabilities.enable(Capability.NOMINAL_CLASS);
-        capabilities.enable(Capability.MISSING_CLASS_VALUES);
 
         capabilities.setMinimumNumberInstances(0);
         return capabilities;
@@ -85,6 +83,7 @@ public class MyID3 extends Classifier {
                 Attribute attr = (Attribute) attEnum.nextElement();
                 infoGains[attr.index()] = Util.calculateIG(instances, attr);
             }
+            
             splitAttribute = instances.attribute(Util.indexOfMax(infoGains));
 
             // Jika IG max = 0, buat daun dengan label kelas mayoritas

@@ -5,6 +5,7 @@
  */
 package myclassifier;
 
+import java.util.Arrays;
 import weka.classifiers.Classifier;
 import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.trees.Id3;
@@ -27,7 +28,8 @@ public class wekaCode {
     public static final int BAYES = 0;
     public static final int ID3 = 1;
     public static final int J48 = 2;
-
+    public static final int MyID3 = 3;
+    public static final int MyJ48 = 4;
     
     //Baca File .arff, .csv etc
     public static Instances readFileArff(String fileName) throws Exception{
@@ -71,6 +73,17 @@ public class wekaCode {
         else if(classifierType == J48){
             classifier = new J48();
             classifier.buildClassifier(dataSet);
+        } 
+        else if(classifierType == MyID3){
+            classifier = new MyID3();
+            classifier.buildClassifier(dataSet);
+        }
+        else if(classifierType == MyJ48){
+            MyJ48 j48 = new MyJ48();
+            j48.setPruning(prune);
+            classifier = j48;
+            classifier.buildClassifier(dataSet);
+            
         }
         return classifier;
     }
@@ -80,6 +93,9 @@ public class wekaCode {
         Evaluation evaluation = new Evaluation(dataSet); 
         evaluation.evaluateModel(classifiers, testSet); //Evaluates the classifier on a given set of instances.
         System.out.println(evaluation.toSummaryString("\n Testing Model given Test Set ", false));
+        System.out.println(evaluation.toClassDetailsString());
+        
+        
         
     }
     

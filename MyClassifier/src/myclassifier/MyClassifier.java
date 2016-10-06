@@ -30,6 +30,7 @@ public class MyClassifier {
         String nameOfFile; 
         Classifier classifier; 
         Instances dataSet; 
+        boolean prune; 
         
         //Baca input file 
         Scanner scan = new Scanner(System.in); 
@@ -41,18 +42,18 @@ public class MyClassifier {
             
             //Remove Attributes
             System.out.println("Masukkan index yang akan dihapus : ");
-            String removeAtr = scan.next(); 
-            Instances FilterData = wekaCode.removeAttributes(dataSet, removeAtr); 
-            System.out.println(FilterData);
+            //String removeAtr = scan.next(); 
+            //Instances FilterData = wekaCode.removeAttributes(dataSet, removeAtr); 
+            //System.out.println(FilterData);
             
             //Resample 
-            FilterData = wekaCode.resampleData(dataSet); 
-            System.out.println(FilterData);
+            //FilterData = wekaCode.resampleData(dataSet); 
+            //System.out.println(FilterData);
             
             //Build Classifier
-            System.out.println("Tuliskan model classifier : 0.BAYES/1.ID3/2.J48 ");
+            System.out.println("Tuliskan model classifier : 0.BAYES / 1.ID3 / 2.J48 / 3.MyID3 /4.MyJ48 ");
             int classifierType = scan.nextInt();
-            classifier = wekaCode.buildClassifier(dataSet, classifierType, false);
+            classifier = wekaCode.buildClassifier(dataSet, classifierType, true);
             System.out.println(classifier.getClass());
             
             //Given test set 

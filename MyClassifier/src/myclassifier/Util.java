@@ -20,11 +20,11 @@ import weka.filters.unsupervised.attribute.Add;
  */
 public class Util {
     public static int indexOfMax(double[] array) {
-        double max = Double.MIN_VALUE;
+        double max = -Double.MAX_VALUE;
         int idx = -1;
         
         for (int i = 0; i < array.length; ++i) {
-            if (array[i] > max) {
+            if (Double.compare(array[i], max) > 0) {
                 max = array[i];
                 idx = i;                
             }            
@@ -127,9 +127,9 @@ public class Util {
             int attValue = (int) instances.instance(i).value(attribute);
             splittedData[attValue].add(instances.instance(i));
         }
-
-        for (Instances currentSplitData: splittedData)
-            currentSplitData.compactify();
+//
+//        for (Instances currentSplitData: splittedData)
+//            currentSplitData.compactify();
 
         return splittedData;
     }
