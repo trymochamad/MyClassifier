@@ -14,9 +14,9 @@ public class MyJ48 extends Classifier {
     private MyJ48[] successors;
     private Attribute splitAttribute;
     private double classValue;
-    private double[] classDistribution;
-    private Attribute classAttribute;
-    private boolean prune;    
+    private double[] classDistribution;    
+    private boolean pruning;    
+    private double attributeThreshold;
 
     @Override
     public Capabilities getCapabilities() {
@@ -37,71 +37,47 @@ public class MyJ48 extends Classifier {
     @Override
     public void buildClassifier(Instances instances) throws Exception {        
         getCapabilities().testWithFail(instances);        
+        for (int i = 0; i < instances.numAttributes(); ++i) {
+            Attribute attribute = instances.attribute(i);
+            for (int j = 0; j < instances.numInstances(); ++j) {
+                Instance instance = instances.instance(j);
+                if (instance.isMissing(attribute))
+                    instance.setValue(attribute, fillMissingValue(instances, attribute));
+            }
+        }
         instances.deleteWithMissingClass();
-        Instances nominalInstances = Util.toNominal(instances);
-        buildTree(nominalInstances);
+        buildTree(instances);
     }
     
     @Override
-    public double classifyInstance(Instance instance)
-            throws NoSupportForMissingValuesException {
-        if (instance.hasMissingValue()) throw new NoSupportForMissingValuesException("classifier.MyID3: This classifier can not handle missing value");
-        if (splitAttribute == null) return classValue;
-        else return successors[(int) instance.value(splitAttribute)].classifyInstance(instance);
-    }
-
-    @Override
-    public double[] distributionForInstance(Instance instance)
-            throws NoSupportForMissingValuesException {
-        if (instance.hasMissingValue()) throw new NoSupportForMissingValuesException("classifier.MyID3: Cannot handle missing values");
-        if (splitAttribute == null) return classDistribution;
-        else {
-            if(splitAttribute.value(0).contains("<=")){
-                int threshold = Integer.valueOf(splitAttribute.value(0).substring(2, 3));
-                if (instance.value(splitAttribute) > threshold)
-                    return successors[1].distributionForInstance(instance);
-                else
-                    return successors[0].distributionForInstance(instance);
-            }
-            return successors[(int) instance.value(splitAttribute)].distributionForInstance(instance);
-        }
-    }    
-    
-    @Override
-    public String toString() {
-        if ((classDistribution == null) && (successors == null)) {
-            return "classifier.MyID3: No model";
-        }
-        return "classifier.MyID3\n\n" + treeToString(0);
-    }
-
-    protected String treeToString(int level) {
-        StringBuilder text = new StringBuilder();
-
-        if (splitAttribute == null) {
-            if (Instance.isMissingValue(classValue))
-                text.append(": null");
+    public double classifyInstance(Instance instance) {        
+        if (splitAttribute == null)
+            return classValue;        
+        else if (splitAttribute.isNominal())
+            return successors[(int) instance.value(splitAttribute)].classifyInstance(instance);                
+        else if (splitAttribute.isNumeric()) {
+            if (instance.value(splitAttribute) < attributeThreshold)
+                return successors[0].classifyInstance(instance);
             else
-                text.append(": ").append(classAttribute.value((int) classValue));
-        } else {
-            for (int j = 0; j < splitAttribute.numValues(); j++) {
-                text.append("\n");
-                for (int i = 0; i < level; i++)
-                    text.append("|  ");
-                text.append(splitAttribute.name()).append(" = ").append(splitAttribute.value(j));
-                text.append(successors[j].treeToString(level + 1));
-            }
+                return successors[1].classifyInstance(instance);
         }
-        return text.toString();
+        else return -1;        
+    }    
+        
+    private double fillMissingValue(Instances instances, Attribute attribute) {
+        int[] sum = new int[attribute.numValues()];
+        for (int i = 0; i < instances.numInstances(); ++i)
+            sum[(int)instances.instance(i).value(attribute)]++;
+        return sum[Util.indexOfMax(sum)];
     }
     
-    public void enablePrune(boolean enable){
-        prune = enable;
+    public void setPruning(boolean enable){
+        pruning = enable;
     }
 
     public void buildTree(Instances instances) throws Exception {        
-        if (prune)
-            instances = doPruning(instances);
+        if (pruning)
+            instances = prune(instances);
         
         if (instances.numInstances() == 0) {
             splitAttribute = null;
@@ -125,11 +101,10 @@ public class MyJ48 extends Classifier {
                     classDistribution[(int) inst.classValue()]++;
                 }
                 Util.normalizeClassDistribution(classDistribution);
-                classValue = Util.indexOfMax(classDistribution);
-                classAttribute = instances.classAttribute();
+                classValue = Util.indexOfMax(classDistribution);                
             }
             else {
-                Instances[] splitData = Util.splitDataBasedOnAttribute(instances, splitAttribute);
+                Instances[] splitData = Util.splitData(instances, splitAttribute);
                 successors = new MyJ48[splitAttribute.numValues()];
                 for (int i = 0; i < splitAttribute.numValues(); i++) {
                     successors[i] = new MyJ48();
@@ -139,14 +114,13 @@ public class MyJ48 extends Classifier {
         }
     }
 
-    protected Instances doPruning(Instances instances) throws Exception {
-        ArrayList<Integer> unsignificantAttributes = new ArrayList();
+    protected Instances prune(Instances instances) throws Exception {
+        ArrayList<Integer> unsignificantAttributes = new ArrayList<>();
         Enumeration attEnum = instances.enumerateAttributes();
-        while (attEnum.hasMoreElements()) {
-            double currentGainRatio;
+        while (attEnum.hasMoreElements()) {            
             Attribute att = (Attribute) attEnum.nextElement();
-            currentGainRatio = Util.calculateGainRatio(instances, att);
-            if (currentGainRatio < 1) {
+            double currentGainRatio = Util.calculateGainRatio(instances, att);
+            if (currentGainRatio < 1.0) {
                 unsignificantAttributes.add(att.index() + 1);
             }
         }

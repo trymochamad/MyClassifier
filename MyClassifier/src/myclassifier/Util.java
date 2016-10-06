@@ -19,8 +19,21 @@ import weka.filters.unsupervised.attribute.Add;
  * @author Visat
  */
 public class Util {
-    public static int indexOfMax(double[] array) {        
+    public static int indexOfMax(double[] array) {
         double max = Double.MIN_VALUE;
+        int idx = -1;
+        
+        for (int i = 0; i < array.length; ++i) {
+            if (array[i] > max) {
+                max = array[i];
+                idx = i;                
+            }            
+        }
+        return idx;
+    }
+    
+    public static int indexOfMax(int[] array) {
+        double max = Integer.MIN_VALUE;
         int idx = -1;
         
         for (int i = 0; i < array.length; ++i) {
@@ -40,7 +53,7 @@ public class Util {
     public static double log2(double val) {
         return equalValue(val, 0) ? 0.0 : (Math.log(val) / Math.log(2));
     }       
-    
+        
     public static void normalizeClassDistribution(double[] array) {
         double sum = 0;
         for (double d: array) sum += d;
@@ -49,7 +62,7 @@ public class Util {
         }
     }
     
-    public static double calculateE(Instances instances) throws Exception {
+    public static double calculateE(Instances instances) {
         double[] labelCounts = new double[instances.numClasses()];
         for (int i = 0; i < instances.numInstances(); ++i)
             labelCounts[(int) instances.instance(i).classValue()]++;
@@ -64,7 +77,7 @@ public class Util {
         return entropy;
     }   
     
-    public static double calculateGainRatio(Instances data, Attribute attribute) throws Exception {
+    public static double calculateGainRatio(Instances data, Attribute attribute) {
         double IG = calculateIG(data, attribute);
         double IV = calculateIntrinsicValue(data, attribute);
         if (IG == 0 || IV == 0)
@@ -72,7 +85,7 @@ public class Util {
         return IG / IV;
     }
 
-    private static double calculateIntrinsicValue(Instances data, Attribute attribute) throws Exception {
+    private static double calculateIntrinsicValue(Instances data, Attribute attribute) {
         double IV = 0;
         Instances[] splitData = splitData(data, attribute);
         for (int i = 0; i < attribute.numValues(); i++){
@@ -84,8 +97,7 @@ public class Util {
         return IV;
     }  
     
-    public static double calculateIG(Instances instances, Attribute attribute)
-            throws Exception {
+    public static double calculateIG(Instances instances, Attribute attribute) {
         double IG = calculateE(instances);
         int missingCount = 0;
         Instances[] splitData = splitData(instances, attribute);
@@ -97,7 +109,7 @@ public class Util {
             }
         }
 
-        for(int i = 0; i < instances.numInstances(); i++){
+        for (int i = 0; i < instances.numInstances(); i++){
             Instance instance = instances.instance(i);
             if (instance.isMissing(attribute))
                 missingCount++;            
@@ -108,8 +120,8 @@ public class Util {
     public static Instances[] splitData(Instances instances, Attribute attribute) {
         Instances[] splittedData = new Instances[attribute.numValues()];
 
-        for (int j = 0; j < attribute.numValues(); j++)
-            splittedData[j] = new Instances(instances, instances.numInstances());
+        for (int i = 0; i < attribute.numValues(); i++)
+            splittedData[i] = new Instances(instances, instances.numInstances());
 
         for (int i = 0; i < instances.numInstances(); i++) {
             int attValue = (int) instances.instance(i).value(attribute);
