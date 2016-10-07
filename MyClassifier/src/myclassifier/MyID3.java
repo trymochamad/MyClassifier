@@ -66,6 +66,7 @@ public class MyID3 extends Classifier {
         // menghapus instance dengan missing class
         i.deleteWithMissingClass();
         buildTree(i);
+        System.out.println(treeToString(0));
     }
     
     public void buildTree(Instances instances) throws Exception {
@@ -119,5 +120,27 @@ public class MyID3 extends Classifier {
             return classValue;
         else
             return successors[(int) instance.value(splitAttribute)].classifyInstance(instance);
+    }
+    
+    protected String treeToString(int level) {
+        StringBuilder text = new StringBuilder();
+
+        if (splitAttribute == null) {
+            if (Instance.isMissingValue(classValue)) {
+                text.append(": null");
+            } else {
+                text.append(": ").append(classAttribute.value((int) classValue));
+            }
+        } else {
+            for (int j = 0; j < splitAttribute.numValues(); j++) {
+                text.append("\n");
+                for (int i = 0; i < level; i++) {
+                    text.append("|  ");
+                }
+                text.append(splitAttribute.name()).append(" = ").append(splitAttribute.value(j));
+                text.append(successors[j].treeToString(level + 1));
+            }
+        }
+        return text.toString();
     }
 }
