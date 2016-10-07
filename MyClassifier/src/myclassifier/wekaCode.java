@@ -18,6 +18,8 @@ import weka.filters.supervised.instance.Resample;
 import weka.filters.unsupervised.attribute.Remove;
 import weka.classifiers.Evaluation;
 import java.util.Random;
+import weka.core.Instance;
+import weka.core.Attribute;
 
 
 /**
@@ -30,6 +32,8 @@ public class wekaCode {
     public static final int J48 = 2;
     public static final int MyID3 = 3;
     public static final int MyJ48 = 4;
+    //public static Instances data;
+    //public static Classifier classifier;
     
     //Baca File .arff, .csv etc
     public static Instances readFileArff(String fileName) throws Exception{
@@ -103,8 +107,8 @@ public class wekaCode {
      public static void foldValidation(Instances dataSet, Classifier classifiers) throws Exception{
         Evaluation evaluation = new Evaluation(dataSet); 
         evaluation.crossValidateModel(classifiers, dataSet, 10, new Random(1)); //Evaluates the classifier on a given set of instances.
-        System.out.println(evaluation.toSummaryString("\n 10-fold cross validation", false));
-        System.out.println(evaluation.confusionMatrix());
+        System.out.println(evaluation.toSummaryString("\n 10-fold cross validation", false));  
+        System.out.println(evaluation.toMatrixString("\n Confusion Matrix"));
         
     }
      
@@ -126,12 +130,12 @@ public class wekaCode {
         return (Classifier) SerializationHelper.read(fileName);
     }
     
-    public static void saveModel(String fileName, Classifier classifier) throws Exception {
-        SerializationHelper.write(fileName, classifier);
+    public static void saveModel(String fileName, Classifier classifiers) throws Exception {
+        SerializationHelper.write(fileName, classifiers);
     }
 
     
-    //Using model to classify one unseen data(input data)
+    //Lihat semua data 
     public static Instances classifyUnseenData (Classifier classifiers, Instances dataSet) throws Exception{
         Instances labeledData = new Instances(dataSet);
         // labeling data
@@ -140,6 +144,27 @@ public class wekaCode {
             labeledData.instance(i).setClassValue(clsLabel);
         }
         return labeledData;
+    }
+    
+    //Using model to classify one unseen data(input data)
+    public static void classifyUnseenData(String[] attributes, Classifier classifiers, Instances data) throws Exception {
+        Instance newInstance = new Instance(data.numAttributes());
+        newInstance.setDataset(data);
+        for (int i = 0; i < data.numAttributes()-1; i++) {
+            if(Attribute.NUMERIC == data.attribute(i).type()){
+                Double value = Double.valueOf(attributes[i]);
+                newInstance.setValue(i, value);
+            } else {
+                newInstance.setValue(i, attributes[i]);
+            }
+        }
+        
+        double clsLabel = classifiers.classifyInstance(newInstance);
+        newInstance.setClassValue(clsLabel);
+        
+        String result = data.classAttribute().value((int) clsLabel);
+        
+        System.out.println("Hasil Classify Unseen Data Adalah: " + result);
     }
     
     

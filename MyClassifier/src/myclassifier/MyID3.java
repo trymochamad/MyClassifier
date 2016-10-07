@@ -99,7 +99,7 @@ public class MyID3 extends Classifier {
                 }
 
                 Util.normalizeClassDistribution(classDistribution);
-                classValue = Util.indexOfMax(infoGains);
+                classValue = Util.indexOfMax(classDistribution);
                 classAttribute = instances.classAttribute();
             } else {
                 Instances[] splitData = Util.splitData(instances, splitAttribute);
