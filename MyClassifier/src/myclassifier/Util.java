@@ -8,6 +8,8 @@ package myclassifier;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import weka.classifiers.Classifier;
+import weka.classifiers.Evaluation;
 import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -117,6 +119,17 @@ public class Util {
         return IG * (instances.numInstances() - missingCount / instances.numInstances());
     }
     
+    public static double calculateIGCont(Instances instances, Attribute attribute, double threshold) {
+        double gain = calculateE(instances);
+        Instances[] split = splitDataCont(instances, attribute, threshold);
+        for (int i = 0; i < 2; i++) {
+            if (split[i].numInstances() > 0) {
+                gain -= ((double) split[i].numInstances() / (double) instances.numInstances()) * Util.calculateE(split[i]);
+            }
+        }
+        return gain;
+    }
+    
     public static Instances[] splitData(Instances instances, Attribute attribute) {
         Instances[] splittedData = new Instances[attribute.numValues()];
 
@@ -125,13 +138,32 @@ public class Util {
 
         for (int i = 0; i < instances.numInstances(); i++) {
             int attValue = (int) instances.instance(i).value(attribute);
-            splittedData[attValue].add(instances.instance(i));
+            if (attValue >= 0 && attValue < attribute.numValues())
+                splittedData[attValue].add(instances.instance(i));
         }
 //
 //        for (Instances currentSplitData: splittedData)
 //            currentSplitData.compactify();
 
         return splittedData;
+    }
+    
+    public static Instances[] splitDataCont(Instances instances, Attribute attribute, double threshold) {
+        Instances[] split = new Instances[2];
+        for (int i = 0; i < 2; i++) {
+            split[i] = new Instances(instances, instances.numInstances());
+        }
+
+        for (int i = 0; i < instances.numInstances(); i++) {
+            double temp = instances.instance(i).value(attribute);
+            if (temp < threshold) {
+                split[0].add(instances.instance(i));
+            } else {
+                split[1].add(instances.instance(i));
+            }
+        }
+
+        return split;
     }
     
     public static Instances setAttributeThreshold(Instances data, Attribute att, int threshold) throws Exception {
@@ -179,5 +211,26 @@ public class Util {
             }
         }
         return data;
+    }
+    
+    public static void percentageSplit(Instances data, Classifier cls) throws Exception {
+        int trainSize = (int) Math.round(data.numInstances() * 0.8);
+        int testSize = data.numInstances() - trainSize;
+        Instances train = new Instances(data, 0, trainSize);
+        Instances test = new Instances(data, trainSize, testSize);
+        
+        Evaluation eval = new Evaluation(train);
+        eval.evaluateModel(cls, test);
+    }
+    
+    public static double percentageSplitRate(Instances data, Classifier cls) throws Exception {
+        int trainSize = (int) Math.round(data.numInstances() * 0.8);
+        int testSize = data.numInstances() - trainSize;
+        Instances train = new Instances(data, 0, trainSize);
+        Instances test = new Instances(data, trainSize, testSize);
+        
+        Evaluation eval = new Evaluation(train);
+        eval.evaluateModel(cls, test);
+        return eval.pctCorrect();
     }
 }
